@@ -23,7 +23,7 @@ RUN xargs /usr/local/bin/install-plugins.sh < /usr/share/jenkins/ref/plugins.txt
 #USER jenkins
 
 # Adding default Jenkins Jobs
-COPY jobs/1-ms60min-job.xml /usr/share/jenkins/ref/jobs/1-ms60min-job/config.xml
+COPY jobs/todobackend-java.xml /usr/share/jenkins/ref/jobs/todobackend-java-job/config.xml
 
 # Jenkins settings
 COPY config.xml /usr/share/jenkins/ref/config.xml
