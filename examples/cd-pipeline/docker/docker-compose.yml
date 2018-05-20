@@ -84,6 +84,7 @@ services:
       - jenkins
 #      - sonarqube
       - artifactory
+      - kibana
 
   runtime:
     build: ./runtime
@@ -96,6 +97,7 @@ services:
       - jenkins
 #      - sonarqube
       - artifactory
+      - kibana
       - nginx
 
   elasticsearch:
@@ -148,7 +150,7 @@ services:
     command: -e -E 'output.elasticsearch.password=changeme'
     # If the host system has logs at "/var/log", mount them at "/mnt/log"
     # inside the container, where Filebeat can find them.
-    volumes: ['/volumes/artifactory/logs:/mnt/log:ro']
+    volumes: ['/volumes/artifactory/logs:/mnt/log', '/volumes/jenkins/jenkins.log:/mnt/log/jenkins.log']
     networks: ['cd-tools-network']
     depends_on: ['elasticsearch', 'setup_filebeat']
 
