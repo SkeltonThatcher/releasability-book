@@ -1,0 +1,202 @@
+version: '3.2'
+
+networks:
+  cd-tools-network:
+    driver: bridge
+
+services:
+  # sonarqubedb:
+  #   image: postgres
+  #   container_name: sonarqube-db
+  #   networks:
+  #     - cd-tools-network
+  #   environment:
+  #     - POSTGRES_USER=sonar
+  #     - POSTGRES_PASSWORD=sonar
+  #   volumes:
+  #     - /volumes/postgres/data:/var/lib/postgresql/data
+
+  # sonarqube:
+  #   image: sonarqube:6.4
+  #   container_name: sonarqube
+  #   command: -Dsonar.web.context=/sonarqube
+  #   ports:
+  #     - "9000:9000"
+  #     - "5432:5432"
+  #   networks:
+  #     - cd-tools-network
+  #   depends_on:
+  #     - sonarqubedb
+  #   environment:
+  #     - SONARQUBE_JDBC_URL=jdbc:postgresql://sonarqubedb:5432/sonar
+  #     - SONARQUBE_JDBC_USERNAME=sonar
+  #     - SONARQUBE_JDBC_PASSWORD=sonar
+
+  artifactory:
+    image: docker.bintray.io/jfrog/artifactory-oss:5.5.2
+    container_name: artifactory
+    networks:
+      - cd-tools-network
+    ports:
+     - 8081:8081
+    environment:
+     - ADMIN_PASSWORD=password
+    volumes:
+     - /volumes/artifactory:/var/opt/jfrog/artifactory
+#    Add extra Java options by uncommenting the following lines
+#    environment:
+#     - EXTRA_JAVA_OPTIONS=-Xmx4g
+#    restart: always
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 32000
+        hard: 40000
+
+  jenkins:
+    build: ./jenkins
+    container_name: jenkins
+    ports:
+      - "8080:8080"
+    command: --prefix=/jenkins/
+    networks:
+      - cd-tools-network
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/local/bin/docker:/usr/local/bin/docker
+      - /volumes/jenkins/:/var/lib/jenkins/
+    depends_on:
+#      - sonarqube
+      - artifactory
+    environment:
+#      - SONARQUBE_SERVER=http://sonarqube:9000/sonarqube
+      - ARTIFACTORY_SERVER=http://artifactory:8081
+
+  nginx:
+    build: ./nginx
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - cd-tools-network
+    depends_on:
+      - jenkins
+#      - sonarqube
+      - artifactory
+      - kibana
+
+  runtime:
+    build: ./runtime
+    container_name: runtime
+    networks:
+      - cd-tools-network
+#    environment:
+#      - PUBLIC_IP_ADDRESS=$PUBLIC_IP_ADDRESS
+    depends_on:
+      - jenkins
+#      - sonarqube
+      - artifactory
+      - kibana
+      - nginx
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch-platinum:6.2.1
+    container_name: elasticsearch
+    environment: ['http.host=0.0.0.0', 'transport.host=127.0.0.1', 'ELASTIC_PASSWORD=changeme']
+    ports: ['127.0.0.1:9200:9200']
+    networks: ['cd-tools-network']
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '0.5'
+    #       memory: 1024M
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:6.2.1
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_USERNAME=kibana
+      - ELASTICSEARCH_PASSWORD=changeme
+    ports: ['127.0.0.1:5601:5601']
+    networks: ['cd-tools-network']
+    depends_on: ['elasticsearch']
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '0.5'
+    #       memory: 1024M
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:6.2.1
+    container_name: logstash
+    environment:
+      - 'xpack.monitoring.elasticsearch.password=changeme'
+    # Provide a simple pipeline configuration for Logstash with a bind-mounted file.
+    volumes:
+      - ./config/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+    networks: ['cd-tools-network']
+    depends_on: ['elasticsearch', 'setup_logstash']
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '0.5'
+    #       memory: 1024M
+
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:6.2.1
+    container_name: filebeat
+    command: -e -E 'output.elasticsearch.password=changeme'
+    # If the host system has logs at "/var/log", mount them at "/mnt/log"
+    # inside the container, where Filebeat can find them.
+    volumes: ['/volumes/artifactory/logs:/mnt/log', '/volumes/jenkins/jenkins.log:/mnt/log/jenkins.log']
+    networks: ['cd-tools-network']
+    depends_on: ['elasticsearch', 'setup_filebeat']
+
+  # Run a short-lived container to set up Logstash.
+  setup_logstash:
+    image: centos:7
+    container_name: setup_logstash
+    volumes: ['./scripts/setup-logstash.sh:/usr/local/bin/setup-logstash.sh:ro']
+    # The script may have CR/LF line endings if using Docker for Windows, so
+    # make sure that they don't confuse Bash.
+    command: ['/bin/bash', '-c', 'cat /usr/local/bin/setup-logstash.sh | tr -d "\r" | bash']
+    environment: ['ELASTIC_PASSWORD=changeme']
+    networks: ['cd-tools-network']
+    depends_on: ['elasticsearch']
+
+  # Run a short-lived container to set up Kibana.
+  setup_kibana:
+    image: centos:7
+    container_name: setup_kibana
+    volumes: ['./scripts/setup-kibana.sh:/usr/local/bin/setup-kibana.sh:ro']
+    command: ['/bin/bash', '-c', 'cat /usr/local/bin/setup-kibana.sh | tr -d "\r" | bash']
+    environment: ['ELASTIC_PASSWORD=changeme']
+    networks: ['cd-tools-network']
+    depends_on: ['elasticsearch']
+
+  setup_filebeat:
+    image: docker.elastic.co/beats/filebeat:6.2.1
+    container_name: setup_filebeat
+    volumes: ['./scripts/setup-beat.sh:/usr/local/bin/setup-beat.sh:ro']
+    command: ['/bin/bash', '-c', 'cat /usr/local/bin/setup-beat.sh | tr -d "\r" | bash -s filebeat']
+    environment: ['ELASTIC_PASSWORD=changeme']
+    networks: ['cd-tools-network']
+    depends_on: ['kibana']
+
+# monitoring 
+
+  cadvisor:
+    image: google/cadvisor:latest
+    container_name: cadvisor
+    ports:
+      - "8082:8080"
+    volumes:
+      - //:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks:
+      - cd-tools-network
