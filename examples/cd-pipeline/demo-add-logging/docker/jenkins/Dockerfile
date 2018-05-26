@@ -24,6 +24,7 @@ RUN xargs /usr/local/bin/install-plugins.sh < /usr/share/jenkins/ref/plugins.txt
 
 # Adding default Jenkins Jobs
 COPY jobs/todobackend-java.xml /usr/share/jenkins/ref/jobs/todobackend-java/config.xml
+COPY jobs/new-app.xml /usr/share/jenkins/ref/jobs/new-app/config.xml
 
 # Jenkins settings
 COPY config.xml /usr/share/jenkins/ref/config.xml
