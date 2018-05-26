@@ -58,6 +58,7 @@ services:
     container_name: jenkins
     ports:
       - "8080:8080"
+      - "44419:44419"
     command: --prefix=/jenkins/
     networks:
       - cd-tools-network
