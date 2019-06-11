@@ -12,9 +12,11 @@ then
 	exit -1
 fi
 
-if [[ ${NEW_REPO} ]]
+USERNAME=$(basename $(dirname $NEW_REPO))
+
+if [[ ${USERNAME} -eq "username" ]]
 then
-        echo "Please replace 'username' with the actual username in the repo URL:"
+        echo "Please replace 'username' with the actual repo owner username in the URL:"
 	echo "${NEW_REPO}"
 	exit -1
 fi
