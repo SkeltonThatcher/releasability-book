@@ -53,11 +53,8 @@ fi
 
 # Copy existing pipeline config and replace with new pipeline name
 cp ${EXISTING_PIPELINE_CONFIG} ${NEW_PIPELINE_CONFIG}
-
-EXISTING_REPO=$(sed -n "s+<url>\(.*\)</url>+\1+p" ${EXISTING_PIPELINE_CONFIG})
-
 sed -i "s+${EXISTING_PIPELINE_NAME}+${NEW_PIPELINE_NAME}+g" ${NEW_PIPELINE_CONFIG}
-sed -i "s+<url>${EXISTING_REPO}+<url>${NEW_REPO}+g" ${NEW_PIPELINE_CONFIG}
+sed -i "s+<url>.*+<url>${NEW_REPO}</url>+g" ${NEW_PIPELINE_CONFIG}
 
 # Update Dockerfile with new pipeline config
 echo "" >> ${JENKINS_DOCKERFILE}
