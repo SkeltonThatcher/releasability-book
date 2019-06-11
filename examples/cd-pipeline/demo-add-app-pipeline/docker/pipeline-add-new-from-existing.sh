@@ -2,12 +2,22 @@
 
 EXISTING_PIPELINE_NAME=$1
 NEW_PIPELINE_NAME=$2
+NEW_REPO=$3
 
 # Validate arguments
 if [[ -z ${EXISTING_PIPELINE_NAME} || -z ${NEW_PIPELINE_NAME} ]]
 then
 	echo "Please specify an existing pipeline name and the name for the new pipeline to add."
-	echo "Syntax: $(basename $0) EXISTING_PIPELINE_NAME NEW_PIPELINE_NAME"
+	echo "Syntax: $(basename $0) EXISTING_PIPELINE_NAME NEW_PIPELINE_NAME NEW_REPO"
+	exit -1
+fi
+
+REPO_OWNER=$(basename $(dirname $NEW_REPO))
+
+if [[ ${REPO_OWNER} = "username" ]]
+then
+        echo "Please replace 'username' with the actual repo owner username in the URL:"
+	echo "${NEW_REPO}"
 	exit -1
 fi
 
@@ -41,12 +51,10 @@ then
 	exit -1
 fi
 
-VC_ROOT_URL="https:\\/\\/github.com\\/SkeltonThatcher\\/"
-
 # Copy existing pipeline config and replace with new pipeline name
 cp ${EXISTING_PIPELINE_CONFIG} ${NEW_PIPELINE_CONFIG}
-sed -i "s/${EXISTING_PIPELINE_NAME}/${NEW_PIPELINE_NAME}/g" ${NEW_PIPELINE_CONFIG}
-sed -i "s/<url>${VC_ROOT_URL}${EXISTING_PIPELINE_NAME}.git/<url>${VC_ROOT_URL}${NEW_REPO}.git/g" ${NEW_PIPELINE_CONFIG}
+sed -i "s+${EXISTING_PIPELINE_NAME}+${NEW_PIPELINE_NAME}+g" ${NEW_PIPELINE_CONFIG}
+sed -i "s+<url>.*+<url>${NEW_REPO}</url>+g" ${NEW_PIPELINE_CONFIG}
 
 # Update Dockerfile with new pipeline config
 echo "" >> ${JENKINS_DOCKERFILE}
