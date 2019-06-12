@@ -5,33 +5,6 @@ networks:
     driver: bridge
 
 services:
-  # sonarqubedb:
-  #   image: postgres
-  #   container_name: sonarqube-db
-  #   networks:
-  #     - cd-tools-network
-  #   environment:
-  #     - POSTGRES_USER=sonar
-  #     - POSTGRES_PASSWORD=sonar
-  #   volumes:
-  #     - /volumes/postgres/data:/var/lib/postgresql/data
-
-  # sonarqube:
-  #   image: sonarqube:6.4
-  #   container_name: sonarqube
-  #   command: -Dsonar.web.context=/sonarqube
-  #   ports:
-  #     - "9000:9000"
-  #     - "5432:5432"
-  #   networks:
-  #     - cd-tools-network
-  #   depends_on:
-  #     - sonarqubedb
-  #   environment:
-  #     - SONARQUBE_JDBC_URL=jdbc:postgresql://sonarqubedb:5432/sonar
-  #     - SONARQUBE_JDBC_USERNAME=sonar
-  #     - SONARQUBE_JDBC_PASSWORD=sonar
-
   artifactory:
     image: docker.bintray.io/jfrog/artifactory-oss:5.5.2
     container_name: artifactory
@@ -66,10 +39,8 @@ services:
       - /usr/local/bin/docker:/usr/local/bin/docker
       - /volumes/jenkins/:/var/lib/jenkins/
     depends_on:
-#      - sonarqube
       - artifactory
     environment:
-#      - SONARQUBE_SERVER=http://sonarqube:9000/sonarqube
       - ARTIFACTORY_SERVER=http://artifactory:8081
 
   nginx:
@@ -82,7 +53,6 @@ services:
       - cd-tools-network
     depends_on:
       - jenkins
-#      - sonarqube
       - artifactory
       - kibana
 
@@ -91,11 +61,8 @@ services:
     container_name: runtime
     networks:
       - cd-tools-network
-#    environment:
-#      - PUBLIC_IP_ADDRESS=$PUBLIC_IP_ADDRESS
     depends_on:
       - jenkins
-#      - sonarqube
       - artifactory
       - kibana
       - nginx

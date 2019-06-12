@@ -1,0 +1,67 @@
+version: '2.0'
+
+networks:
+  cd-tools-network:
+    driver: bridge
+
+services:
+  artifactory:
+    image: docker.bintray.io/jfrog/artifactory-oss:5.5.2
+    container_name: artifactory
+    networks:
+      - cd-tools-network
+    ports:
+     - 8081:8081
+    environment:
+     - ADMIN_PASSWORD=password
+    volumes:
+     - /volumes/artifactory:/var/opt/jfrog/artifactory
+#    Add extra Java options by uncommenting the following lines
+#    environment:
+#     - EXTRA_JAVA_OPTIONS=-Xmx4g
+#    restart: always
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 32000
+        hard: 40000
+
+  jenkins:
+    build: ./jenkins
+    container_name: jenkins
+    ports:
+      - "8080:8080"
+    command: --prefix=/jenkins/
+    networks:
+      - cd-tools-network
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/local/bin/docker:/usr/local/bin/docker
+      - /volumes/jenkins/:/var/lib/jenkins/
+    depends_on:
+      - artifactory
+    environment:
+      - ARTIFACTORY_SERVER=http://artifactory:8081
+
+  nginx:
+    build: ./nginx
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - cd-tools-network
+    depends_on:
+      - jenkins
+      - artifactory
+
+  runtime:
+    build: ./runtime
+    container_name: runtime
+    networks:
+      - cd-tools-network
+    depends_on:
+      - jenkins
+      - artifactory
+      - nginx
+
