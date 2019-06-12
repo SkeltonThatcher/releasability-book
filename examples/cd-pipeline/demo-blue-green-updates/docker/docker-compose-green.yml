@@ -5,9 +5,9 @@ networks:
     driver: bridge
 
 services:
-  artifactory:
+  artifactory-green:
     image: docker.bintray.io/jfrog/artifactory-oss:5.5.2
-    container_name: artifactory
+    container_name: artifactory-green
     networks:
       - cd-tools-network-green
     ports:
@@ -15,7 +15,7 @@ services:
     environment:
      - ADMIN_PASSWORD=password
     volumes:
-     - /volumes/artifactory:/var/opt/jfrog/artifactory
+     - /volumes/artifactory-green:/var/opt/jfrog/artifactory
 #    Add extra Java options by uncommenting the following lines
 #    environment:
 #     - EXTRA_JAVA_OPTIONS=-Xmx4g
@@ -26,9 +26,9 @@ services:
         soft: 32000
         hard: 40000
 
-  jenkins:
+  jenkins-green:
     build: ./jenkins
-    container_name: jenkins
+    container_name: jenkins-green
     ports:
       - "8080:8080"
     command: --prefix=/jenkins/
@@ -37,11 +37,11 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /usr/local/bin/docker:/usr/local/bin/docker
-      - /volumes/jenkins/:/var/lib/jenkins/
+      - /volumes/jenkins-green/:/var/lib/jenkins/
     depends_on:
-      - artifactory
+      - artifactory-green
     environment:
-      - ARTIFACTORY_SERVER=http://artifactory:8081
+      - ARTIFACTORY_SERVER=http://artifactory-green:8081
 
   nginx:
     build: ./nginx
@@ -52,16 +52,16 @@ services:
     networks:
       - cd-tools-network-green
     depends_on:
-      - jenkins
-      - artifactory
+      - jenkins-green
+      - artifactory-green
 
-  runtime:
+  runtime-green:
     build: ./runtime
-    container_name: runtime
+    container_name: runtime-green
     networks:
       - cd-tools-network-green
     depends_on:
-      - jenkins
-      - artifactory
+      - jenkins-green
+      - artifactory-green
       - nginx
 

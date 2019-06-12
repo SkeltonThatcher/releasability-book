@@ -5,9 +5,9 @@ networks:
     driver: bridge
 
 services:
-  sonarqubedb:
+  sonarqubedb-blue:
     image: postgres
-    container_name: sonarqube-db
+    container_name: sonarqube-db-blue
     networks:
       - cd-tools-network-blue
     environment:
@@ -18,7 +18,7 @@ services:
 
   sonarqube:
     image: sonarqube:6.4
-    container_name: sonarqube
+    container_name: sonarqube-blue
     command: -Dsonar.web.context=/sonarqube
     ports:
       - "9000:9000"
@@ -26,7 +26,7 @@ services:
     networks:
       - cd-tools-network-blue
     depends_on:
-      - sonarqubedb
+      - sonarqubedb-blue
     environment:
       - SONARQUBE_JDBC_URL=jdbc:postgresql://sonarqubedb:5432/sonar
       - SONARQUBE_JDBC_USERNAME=sonar
@@ -34,15 +34,15 @@ services:
 
   artifactory:
     image: docker.bintray.io/jfrog/artifactory-oss:5.5.2
-    container_name: artifactory
+    container_name: artifactory-blue
     networks:
       - cd-tools-network-blue
     ports:
-     - 8081:8081
+     - 8181:8081
     environment:
      - ADMIN_PASSWORD=password
     volumes:
-     - /volumes/artifactory:/var/opt/jfrog/artifactory
+     - /volumes/artifactory-blue:/var/opt/jfrog/artifactory
 #    Add extra Java options by uncommenting the following lines
 #    environment:
 #     - EXTRA_JAVA_OPTIONS=-Xmx4g
@@ -55,44 +55,44 @@ services:
 
   jenkins:
     build: ./jenkins
-    container_name: jenkins
+    container_name: jenkins-blue
     ports:
-      - "8080:8080"
+      - "8180:8080"
     command: --prefix=/jenkins/
     networks:
       - cd-tools-network-blue
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /usr/local/bin/docker:/usr/local/bin/docker
-      - /volumes/jenkins/:/var/lib/jenkins/
+      - /volumes/jenkins-blue/:/var/lib/jenkins/
     depends_on:
-      - sonarqube
-      - artifactory
+      - sonarqube-blue
+      - artifactory-blue
     environment:
-      - SONARQUBE_SERVER=http://sonarqube:9000/sonarqube
-      - ARTIFACTORY_SERVER=http://artifactory:8081
+      - SONARQUBE_SERVER=http://sonarqube-blue:9000/sonarqube
+      - ARTIFACTORY_SERVER=http://artifactory-blue:8181
 
   nginx:
     build: ./nginx
     container_name: nginx
     ports:
-      - "8100:8100"
-      - "843:843"
+      - "8100:80"
+      - "843:443"
     networks:
       - cd-tools-network-blue
     depends_on:
-      - jenkins
-      - sonarqube
-      - artifactory
+      - jenkins-blue
+      - sonarqube-blue
+      - artifactory-blue
 
   runtime:
     build: ./runtime
-    container_name: runtime
+    container_name: runtime-blue
     networks:
       - cd-tools-network-blue
     depends_on:
-      - jenkins
-      - sonarqube
-      - artifactory
+      - jenkins-blue
+      - sonarqube-blue
+      - artifactory-blue
       - nginx
 
