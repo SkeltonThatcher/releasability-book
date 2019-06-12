@@ -16,7 +16,7 @@ services:
     volumes:
       - /volumes/postgres/data:/var/lib/postgresql/data
 
-  sonarqube:
+  sonarqube-blue:
     image: sonarqube:6.4
     container_name: sonarqube-blue
     command: -Dsonar.web.context=/sonarqube
@@ -32,7 +32,7 @@ services:
       - SONARQUBE_JDBC_USERNAME=sonar
       - SONARQUBE_JDBC_PASSWORD=sonar
 
-  artifactory:
+  artifactory-blue:
     image: docker.bintray.io/jfrog/artifactory-oss:5.5.2
     container_name: artifactory-blue
     networks:
@@ -42,7 +42,7 @@ services:
     environment:
      - ADMIN_PASSWORD=password
     volumes:
-     - /volumes/artifactory-blue:/var/opt/jfrog/artifactory
+     - /volumes/artifactory:/var/opt/jfrog/artifactory
 #    Add extra Java options by uncommenting the following lines
 #    environment:
 #     - EXTRA_JAVA_OPTIONS=-Xmx4g
@@ -53,7 +53,7 @@ services:
         soft: 32000
         hard: 40000
 
-  jenkins:
+  jenkins-blue:
     build: ./jenkins
     container_name: jenkins-blue
     ports:
@@ -64,7 +64,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /usr/local/bin/docker:/usr/local/bin/docker
-      - /volumes/jenkins-blue/:/var/lib/jenkins/
+      - /volumes/jenkins/:/var/lib/jenkins/
     depends_on:
       - sonarqube-blue
       - artifactory-blue
