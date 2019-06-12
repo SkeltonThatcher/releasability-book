@@ -70,11 +70,11 @@ services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch-platinum:6.2.1
     container_name: elasticsearch
-#    environment: ['http.host=0.0.0.0', 'transport.host=127.0.0.1', 'ELASTIC_PASSWORD=changeme']
-    environment: ['http.host=0.0.0.0', 'transport.host=0.0.0.0', 'ELASTIC_PASSWORD=changeme']
-#    ports: ['127.0.0.1:9200:9200']
-    ports:
-      - "9200:9200"
+    environment: ['http.host=0.0.0.0', 'transport.host=127.0.0.1', 'ELASTIC_PASSWORD=changeme']
+#    environment: ['http.host=0.0.0.0', 'transport.host=0.0.0.0', 'ELASTIC_PASSWORD=changeme']
+    ports: ['127.0.0.1:9200:9200']
+#    ports:
+#      - "9200:9200"
     networks: ['cd-tools-network']
     # deploy:
     #   resources:
