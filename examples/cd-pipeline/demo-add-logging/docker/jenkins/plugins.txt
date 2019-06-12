@@ -1,3 +1,4 @@
+cloudbees-folder:6.8
 git:latest
 job-dsl:latest
 workflow-aggregator:latest
