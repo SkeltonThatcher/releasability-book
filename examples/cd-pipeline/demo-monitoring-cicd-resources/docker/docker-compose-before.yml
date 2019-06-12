@@ -1,4 +1,4 @@
-version: '3.2'
+version: '2.0'
 
 networks:
   cd-tools-network:
@@ -65,18 +65,3 @@ services:
       - artifactory
       - nginx
 
-# monitoring 
-
-  cadvisor:
-    image: google/cadvisor:latest
-    container_name: cadvisor
-    ports:
-      - "8082:8080"
-    volumes:
-      - //:/rootfs:ro
-      - /var/run:/var/run:rw
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
-      - /dev/disk/:/dev/disk:ro
-    networks:
-      - cd-tools-network
