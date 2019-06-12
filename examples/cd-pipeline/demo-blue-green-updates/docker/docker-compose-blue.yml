@@ -72,9 +72,9 @@ services:
       - SONARQUBE_SERVER=http://sonarqube-blue:9000/sonarqube
       - ARTIFACTORY_SERVER=http://artifactory-blue:8181
 
-  nginx:
-    build: ./nginx
-    container_name: nginx
+  nginx-blue:
+    build: ./nginx-blue
+    container_name: nginx-blue
     ports:
       - "8100:80"
       - "843:443"
@@ -94,5 +94,5 @@ services:
       - jenkins-blue
       - sonarqube-blue
       - artifactory-blue
-      - nginx
+      - nginx-blue
 

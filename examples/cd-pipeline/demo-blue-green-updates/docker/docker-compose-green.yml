@@ -43,9 +43,9 @@ services:
     environment:
       - ARTIFACTORY_SERVER=http://artifactory-green:8081
 
-  nginx:
-    build: ./nginx
-    container_name: nginx
+  nginx-gren:
+    build: ./nginx-gren
+    container_name: nginx-gren
     ports:
       - "80:80"
       - "443:443"
@@ -63,5 +63,5 @@ services:
     depends_on:
       - jenkins-green
       - artifactory-green
-      - nginx
+      - nginx-gren
 
