@@ -85,7 +85,9 @@ services:
     environment:
       - ELASTICSEARCH_USERNAME=kibana
       - ELASTICSEARCH_PASSWORD=changeme
-    ports: ['127.0.0.1:5601:5601']
+#    ports: ['127.0.0.1:5601:5601']
+    ports:
+      - "5601:5601"
     networks: ['cd-tools-network']
     depends_on: ['elasticsearch']
     # deploy:
@@ -144,6 +146,7 @@ services:
     networks: ['cd-tools-network']
     depends_on: ['elasticsearch']
 
+  # Run a short-lived container to set up filebeat.
   setup_filebeat:
     image: docker.elastic.co/beats/filebeat:6.2.1
     container_name: setup_filebeat
